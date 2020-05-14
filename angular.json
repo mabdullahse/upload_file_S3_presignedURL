@@ -119,6 +119,10 @@
           }
         }
       }
-    }},
-  "defaultProject": "fileUploader"
+    }
+  },
+  "defaultProject": "fileUploader",
+  "cli": {
+    "analytics": false
+  }
 }
