@@ -16,22 +16,29 @@ export class AppComponent {
   }
 
   onFilePicked(event: Event): void {
-
     this.errorMsg = false
-    console.log(event);
     const FILE = (event.target as HTMLInputElement).files[0];
     this.fileObj = FILE;
-    console.log(this.fileObj);
   }
+
+
   onFileUpload() {
     if (!this.fileObj) {
       this.errorMsg = true
       return
     }
-    const fileForm = new FormData();
-    fileForm.append('file', this.fileObj);
-    this.fileUploadService.fileUpload(fileForm).subscribe(res => {
-      this.fileUrl = res['image'];
+    this.fileUploadService.getpresignedurls(this.fileObj.name, this.fileObj.type).subscribe(res => {
+      if (res.success) {
+        const fileuploadurl = res.urls[0];
+        const imageForm = new FormData();
+        imageForm.append('file', this.fileObj);
+        this.fileUploadService.uploadfileAWSS3(fileuploadurl, this.fileObj.type, this.fileObj).subscribe((event) => {
+
+        });
+      }
+
+
+
     });
   }
 

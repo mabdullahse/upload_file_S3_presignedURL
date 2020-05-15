@@ -9,39 +9,40 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-// aws.config.update({
-//     secretAccessKey: 'IAM User Secrect Access Key',
-//     accessKeyId: 'IAM User Access Key',
-//     region: 'Selected TIme Zone on S3 bucket',
-// });
+aws.config.update({
+    //     secretAccessKey: 'IAM User Secrect Access Key',
+    //     accessKeyId: 'IAM User Access Key',
+    //     region: 'Selected TIme Zone on S3 bucket',
+    useAccelerateEndpoint: true,
+    endpoint: 'jspicload123.s3-accelerate.amazonaws.com',
+    signatureVersion: 'v4',
+});
 
 const s3 = new aws.S3();
-const upload = multer({
-    fileFilter: (req, file, cb) => {
-        if (file.mimetype === 'application/octet-stream' || file.mimetype === 'video/mp4'
-            || file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
-            cb(null, true);
-        } else {
-            cb(new Error('Invalid file type'), false);
+
+app.get('/generatepresignedurl', function (req, res) {
+    var fileurls = [];
+
+    const params = {
+        Bucket: 'YOUR BUCKET NAME',
+        Key: req.query.fileName,
+        Expires: 60 * 60,
+        ACL: 'public-read',
+        ContentType: req.query.fileType
+    };
+
+    s3.getSignedUrl('putObject', params, function async(err, url) {
+        if (err) {
+            res.json({
+                success: false, message: 'Pre- Signed URL error', urls: fileurls
+            });
         }
-    },
-    storage: multerS3({
-        acl: 'public-read',
-        s3,
-        bucket: 'YOUR BUCKET NAME',
-        key: function (req, file, cb) {
-            req.file = Date.now() + file.originalname;
-            cb(null, Date.now() + file.originalname);
+        else {
+            fileurls[0] = url;
+            res.json({ success: true, message: 'AWS SDK S3 Pre- signed urls generated successfully', urls: fileurls });
         }
-    })
+    });
 });
-
-
-app.post('/api/upload', upload.array('file', 1), (req, res) => {
-    res.send({ file: req.file });
-});
-
-
 
 app.listen(5000, () => {
     console.log('Server listening on port 5000!');
